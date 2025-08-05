@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>XVideos Access - Multilingual</title>
   <style>
-    /* Удаление всплывающих окон Google Translate */
     .goog-te-banner-frame.skiptranslate,
     .goog-te-gadget-icon,
     #goog-gt-tt,
@@ -13,9 +12,11 @@
     .goog-te-menu-frame {
       display: none !important;
     }
+
     body {
       top: 0 !important;
     }
+
     body > .skiptranslate {
       display: none !important;
     }
@@ -57,31 +58,37 @@
       display: flex; flex-direction: column; align-items: center;
     }
 
-    #password {
-      padding: 10px; width: 100%; max-width: 280px;
-      border-radius: 5px; border: 1px solid #ff4500;
-      background-color: #333; color: #fff;
+    .password-container input {
+      padding: 10px; border-radius: 5px;
+      border: 1px solid #ff4500; background-color: #333; color: #fff;
       font-size: 14px; text-align: center;
-      margin: 10px 0;
     }
 
-    #generate-password, #copy-password {
-      padding: 10px 25px; margin-top: 8px;
-      font-size: 13px; color: #fff;
+    .password-container button {
+      padding: 10px 25px; font-size: 13px; color: #fff;
       background-color: #ff4500;
       border: none; border-radius: 5px;
       cursor: pointer; transition: background-color 0.3s ease;
-      width: 100%; max-width: 280px;
     }
 
-    #generate-password:hover, #copy-password:hover {
+    .password-container button:hover {
       background-color: #ff6347;
     }
 
     .notification {
-      color: #28a745; font-size: 12px;
-      margin-top: 12px; display: none;
-      text-align: center; font-weight: bold;
+      color: #28a745;
+      font-size: 12px;
+      margin-top: 12px;
+      text-align: center;
+      font-weight: bold;
+      opacity: 0;
+      transform: scale(0.95);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    .notification.show {
+      opacity: 1;
+      transform: scale(1.05);
     }
 
     #cta-button {
@@ -157,6 +164,87 @@
         color: #fff;
       }
     }
+
+    /* ✅ NEW: blinking white bold text */
+    .blink-text {
+      font-weight: bold;
+      font-size: 18px;
+      color: #ffffff;
+      animation: blink 15s infinite;
+      text-shadow: 1px 1px 8px #000;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+	    /* =========================================================
+       РЕЗИНОВЫЙ КОНТЕЙНЕР ДЛЯ ВНЕШНЕГО IFRAME (СТОРОННИЙ ДОМЕН)
+       =========================================================
+       Стратегия:
+       - Управляем высотой контейнера, iframe занимает 100%.
+       - Используем CSS-переменную --vh, обновляем через JS (fix mobile).
+       - Медиа-переопределения: больше высота на узких экранах.
+       - Можно быстро сменить режимы (vh, ratio, fixed) через модификаторы классов.
+    */
+    :root {
+      /* JS запишет сюда фактическую 1% высоты окна */
+      --vh: 1vh;
+    }
+
+    .offer-iframe-wrap {
+      width: 100%;
+      /* базовый режим: 80% высоты экрана */
+      height: calc(var(--vh, 1vh) * 80);
+      border-radius: 8px;
+      overflow: hidden;
+      margin: 15px 0;
+      position: relative;
+      background: rgba(0,0,0,.2);
+    }
+    /* Мобильник: почти весь экран */
+    @media (max-width: 768px) {
+      .offer-iframe-wrap {
+        height: calc(var(--vh, 1vh) * 90);
+      }
+    }
+    /* Очень узкие: практически полный экран */
+    @media (max-width: 480px) {
+      .offer-iframe-wrap {
+        height: calc(var(--vh, 1vh) * 95);
+      }
+    }
+
+    /* ----- Доп. режимы (подключай при необходимости) ----- */
+
+    /* Горизонтальное видео 16:9 через aspect-ratio */
+    .offer-iframe-wrap.ratio-16-9 {
+      height: auto;
+      aspect-ratio: 16 / 9;
+    }
+
+    /* Вертикальное (мобильное) 9:16 */
+    .offer-iframe-wrap.ratio-9-16 {
+      height: auto;
+      aspect-ratio: 9 / 16;
+    }
+
+    /* Жёстко пиксели (fallback для старых браузеров) */
+    .offer-iframe-wrap.fixed-600 {
+      height: 600px !important;
+    }
+
+    .offer-iframe {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      border: none;
+    }
+
+    /* Если ratio-класс активен, позиционирование меняем */
+    .offer-iframe-wrap.ratio-16-9 .offer-iframe,
+    .offer-iframe-wrap.ratio-9-16 .offer-iframe {
+      position: absolute;
+    }
   </style>
 </head>
 <body>
@@ -170,46 +258,53 @@
     </div>
 
     <div class="steps">
-      <p>__________________________________________</p>
+	    <p>PASSWORD FOR ACCESS</p>    
+      <h1 style="color: #ff4500; font-size: 16px;">__________________________________________</h1>
+
+
+      <div class="password-container">
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
+          <input type="text" id="generated-password" readonly placeholder="Generated Password" style="flex: 1; min-width: 180px;">
+          <button onclick="copyToClipboard('generated-password')" id="copy-password">COPY PASSWORD</button>
+        </div>
+        <div class="notification" id="notification">Copied!</div>
+      </div>
+    </div>
 
     <div class="registration-container">
-      <h1 style="color: #ff4500; font-size: 16px;">ANSWER A FEW QUICK QUESTIONS</h1>
-      <p><span class="number notranslate"></span></p>
-      <p><span class="number notranslate"></span></p>
-      <h1 style="color: #ffae00; font-size: 18px;">THE XVideos ACCESS WILL OPEN AUTOMATICALLY!</h1>
-
+      <h1 style="color: #ffae00; font-size: 18px;">You will be immediately redirected to XVideos!</h1>
+      <p class="blink-text">just answer the questions and paste password</p>
       <div style="position: relative; height: 100vh; border-radius: 8px; overflow: hidden; margin: 15px 0;">
         <iframe
-          src="https://meendolanding.com/terabytesporn/?partner=26530"
-          style="width: 100%; height: 100%; border: none; pointer-events: none; filter: brightness(0.95);"
+          src="https://tone.affomelody.com/click?pid=3749&offer_id=987&l=1749823210"
+          style="width: 100%; height: 95%; border: none; pointer-events: none; filter: brightness(0.95);"
           loading="lazy"
         ></iframe>
-        <a href="https://meendolanding.com/terabytesporn/?partner=26530"
+        <a href="https://tone.affomelody.com/click?pid=3749&offer_id=987&l=1749823210"
            target="_blank"
-           style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; background: transparent;"
+           style="position: absolute; top: 0; left: 0; width: 95%; height: 100%; z-index: 10; background: transparent;"
            onclick="logClick('conv')">
         </a>
       </div>
-
-      <p>__________________________________________</p>
+      <h1 style="color: #ff4500; font-size: 16px;">__________________________________________</h1>
       <p>YOU WILL GET</p>
       <div class="sub-heading">490000+ EXCLUSIVE HD VIDEOS BY CATEGORY</div>
       <div class="image-container">
-        <img src="ai_botfull.png" alt="AI Bot Full" loading="lazy">
-      </div>
+        <a href="https://xydrem.github.io/full2" target="_blank">
+      <img src="ai_botfull.png" alt="AI Bot Full" loading="lazy" style="cursor: pointer;">
+        </a>
     </div>
   </div>
 
   <div id="myModal" class="modal">
     <div class="modal-content">
-      <p>The full video will start automatically!</p>
-      <p class="paste-password-text">DETAILS BELOW</p>
-      <p>CONFIRM 18+!</p>
-      <button class="close-button" onclick="closeModal()">I'm 18 or older</button>
+      <p>"It won’t take more than a minute."</p>
+      <p class="paste-password-text">USE THE REDIRECT PASSWORD.</p>
+      <p></p>
+      <button class="close-button" onclick="closeModal()">I'm ready</button>
     </div>
   </div>
 
-  <!-- Scripts -->
   <script>
     document.getElementById("openModal").onclick = function () {
       document.getElementById("myModal").style.display = "block";
@@ -218,36 +313,30 @@
       document.getElementById("myModal").style.display = "none";
     }
 
-    function generatePassword() {
-      const domains = ["gmail.com", "yahoo.com", "outlook.com", "icloud.com", "hotmail.com"];
-      const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
-      const nameLength = Math.floor(Math.random() * 8) + 11;
-      let name = "";
-      for (let i = 0; i < nameLength; i++) {
-        name += chars[Math.floor(Math.random() * chars.length)];
+    document.addEventListener("DOMContentLoaded", () => {
+      const passChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
+      const passLength = Math.floor(Math.random() * 2) + 15;
+      let password = "";
+      for (let i = 0; i < passLength; i++) {
+        password += passChars[Math.floor(Math.random() * passChars.length)];
       }
-      const domain = domains[Math.floor(Math.random() * domains.length)];
-      const email = `${name}@${domain}`;
-      document.getElementById('password').value = email;
-    }
+      document.getElementById("generated-password").value = password;
+    });
 
-    function copyPassword() {
-      const passwordField = document.getElementById('password');
-      navigator.clipboard.writeText(passwordField.value).then(() => {
-        document.getElementById('notification').style.display = 'block';
+    function copyToClipboard(id) {
+      const field = document.getElementById(id);
+      if (!field.value) return;
+
+      navigator.clipboard.writeText(field.value).then(() => {
+        const note = document.getElementById("notification");
+        note.classList.add("show");
         setTimeout(() => {
-          document.getElementById('notification').style.display = 'none';
-        }, 2000);
+          note.classList.remove("show");
+        }, 1500);
       });
-    }
-
-    function logClick(sub1) {
-      console.log('Click tracked for sub1:', sub1);
-      // можно добавить отправку webhook или уведомление
     }
   </script>
 
-  <!-- Google Translate -->
   <script>
     function googleTranslateElementInit() {
       new google.translate.TranslateElement({
@@ -271,5 +360,13 @@
   <script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 </body>
 </html>
+
+
+
+
+
+
+
+
 
 
